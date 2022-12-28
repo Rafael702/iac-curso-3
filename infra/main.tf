@@ -24,7 +24,7 @@ resource "aws_launch_template" "maquina" {
         Name = "Terraform Ansible Python"
     }
     security_group_names = [var.grupoDeSeguranca]
-    user_data = filebase64("ansible.sh") //coloca o script em uma base de 64 caracteres
+    user_data = var.producao ? filebase64("ansible.sh") : "" //coloca o script em uma base de 64 caracteres
 }
 
 resource "aws_key_pair" "chaveSSH"{
@@ -37,11 +37,11 @@ resource "aws_autoscaling_group" "grupo" {
   name = var.nomeGrupo
   max_size = var.maximo
   min_size = var.minimo
+  target_group_arns = var.producao ? [ aws_lb_target_group.alvoLoadBalancer[0].arn ] : []
   launch_template {
     id = aws_launch_template.maquina.id
     version = "$Latest"
   }
-  target_group_arns = [ aws_lb_target_group.alvoLoadBalancer.arn ]
   }
 
 //redes internas na aws
@@ -57,6 +57,7 @@ resource "aws_autoscaling_group" "grupo" {
   resource "aws_lb" "loadBalancer" {
     internal = false
     subnets = [aws_default_subnet.subnet_1.id,aws_default_subnet.subnet_2.id ]
+    count = var.producao ? 1 : 0//n° de recursos
   }
 
   resource "aws_default_vpc" "default" {
@@ -68,16 +69,19 @@ resource "aws_autoscaling_group" "grupo" {
     port     = "8000"
     protocol = "HTTP"
     vpc_id   =  aws_default_vpc.default.id //Virtual Private Cloud
+    count = var.producao ? 1 : 0
   }
 
+//Entrada do LoadBalancer
 resource "aws_lb_listener" "entradaLoadBalancer" {
-  load_balancer_arn = aws_lb.loadBalancer.arn
+  load_balancer_arn = aws_lb.loadBalancer[0].arn
   port = "8000"
   protocol = "HTTP"
   default_action {
     type = "forward"
-    target_group_arn = aws_lb_target_group.alvoLoadBalancer.arn
+    target_group_arn = aws_lb_target_group.alvoLoadBalancer[0].arn
   }
+  count = var.producao ? 1 : 0
 }
 
 resource "aws_autoscaling_policy" "escala-Producao" {
@@ -90,4 +94,5 @@ resource "aws_autoscaling_policy" "escala-Producao" {
     }
     target_value = 50.0 //50% da CPU sendo utilizada. Mais do que isso sera criado novas maquinas para ajudar, menos que isso as maquinas serão destruidas ate o minimo de maquinas que estabelecemos no ambiente 
   }
+  count = var.producao ? 1 : 0
 }
