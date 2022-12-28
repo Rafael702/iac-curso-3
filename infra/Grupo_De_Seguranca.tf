@@ -1,5 +1,5 @@
 resource "aws_security_group" "acesso_geral" {
-    name = var.security_group_name
+    name = var.grupoDeSeguranca
     description = "grupo do Dev"
     ingress{
         cidr_blocks = ["0.0.0.0/0"] //ipv4 que pode entrar para todas as maquinas

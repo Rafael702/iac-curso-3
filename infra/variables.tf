@@ -12,10 +12,22 @@ variable "instancia" {
     type = string
 }
 
-variable "security_group_name" {
+variable "ami" {
     type = string
 }
 
-variable "ami" {
+variable "grupoDeSeguranca" {
+    type = string
+}
+
+variable "minimo"{
+    type = number
+}
+
+variable "maximo"{
+    type = number
+}
+
+variable "nomeGrupo"{
     type = string
 }
