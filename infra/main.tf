@@ -54,7 +54,7 @@ resource "aws_autoscaling_group" "grupo" {
   }
 
 //Distribuidor de carga
-  resource "aws_lb" "loadBalancerProducao" {
+  resource "aws_lb" "loadBalancer" {
     internal = false
     subnets = [aws_default_subnet.subnet_1.id,aws_default_subnet.subnet_2.id ]
   }
@@ -70,12 +70,24 @@ resource "aws_autoscaling_group" "grupo" {
     vpc_id   =  aws_default_vpc.default.id //Virtual Private Cloud
   }
 
-resource "aws_listener" "entradaLoadBalancer" {
-  load_balancer_arn = aws_lb.load_balancer_arn
+resource "aws_lb_listener" "entradaLoadBalancer" {
+  load_balancer_arn = aws_lb.loadBalancer.arn
   port = "8000"
   protocol = "HTTP"
   default_action {
     type = "forward"
     target_group_arn = aws_lb_target_group.alvoLoadBalancer.arn
+  }
+}
+
+resource "aws_autoscaling_policy" "escala-Producao" {
+  name                   = "terraform-escala"
+  autoscaling_group_name = var.nomeGrupo
+  policy_type            = "TargetTrackingScaling" //Escalonamento pelo acompanhamento do alvo
+  target_tracking_configuration { //configuracao do alvo que queremos atingir. Quanto de CPU que queremos
+    predefined_metric_specification { //metricas customizadas
+      predefined_metric_type = "ASGAverageCPUUtilization" //metrica do tipo medio de CPU que a maquina esta utilizando
+    }
+    target_value = 50.0 //50% da CPU sendo utilizada. Mais do que isso sera criado novas maquinas para ajudar, menos que isso as maquinas serão destruidas ate o minimo de maquinas que estabelecemos no ambiente 
   }
 }
