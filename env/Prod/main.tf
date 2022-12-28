@@ -5,9 +5,8 @@ module "aws-prod" {
   instancia  = "t2.micro"
   regiao_aws = "us-west-2"
   chave = "Iac-prod"
-  security_group_name = "acesso_geral_prod"
-}
-
-output "IP_Prod" {
-  value = module.aws-prod.IP_publico
+  grupoDeSeguranca = "Producao"
+  minimo  = 1
+  maximo = 10
+  nomeGrupo  = "Producao"
 }
